@@ -118,7 +118,7 @@
 </select>
 <button onclick={acticateWebcam}>activate webcam</button>
 <br />
-<video bind:this={video}></video>
+<video bind:this={video} playsinline></video>
 <canvas bind:this={canvas}></canvas>
 <br />
 <button bind:this={startbutton}>capture</button>
