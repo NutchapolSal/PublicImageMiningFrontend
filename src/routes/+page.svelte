@@ -13,18 +13,35 @@
 	let serverUrl = $state('');
 	let loginUsername = $state('');
 	let lastResult: { modelGuess: string; output: string } | null = $state(null);
+	let cameraGranted = $state(false);
 
-	function acticateWebcam() {
-		navigator.mediaDevices
-			.getUserMedia({ video: deviceId ? { deviceId: deviceId } : true, audio: false })
-			.then((stream) => {
-				video.srcObject = stream;
-				video.play();
-			})
-			.catch((err) => {
-				console.log('An error occurred: ' + err);
-			});
+	async function allowWebcam() {
+		await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+		cameraGranted = true;
 	}
+
+	$effect(() => {
+		if (cameraGranted) {
+			navigator.mediaDevices.enumerateDevices().then((devices) => {
+				mediaDevices = devices.filter((d) => d.kind === 'videoinput');
+			});
+		}
+	});
+
+	$effect(() => {
+		if (deviceId) {
+			navigator.mediaDevices
+				.getUserMedia({ video: { deviceId: deviceId }, audio: false })
+				.then((stream) => {
+					video.srcObject = stream;
+					video.play();
+				})
+				.catch((err) => {
+					console.log('An error occurred: ' + err);
+				});
+		}
+	});
 
 	async function login() {
 		loginFailure = false;
@@ -51,16 +68,14 @@
 			output: (result.data as unknown[])[1] as string
 		};
 	}
+	}
 
 	$effect(() => {
-		navigator.mediaDevices.enumerateDevices().then((devices) => {
-			for (const device of devices) {
-				if (device.kind === 'videoinput' && deviceId === null) {
-					deviceId = device.deviceId;
-					break;
-				}
-			}
-			mediaDevices = devices.filter((d) => d.kind === 'videoinput');
+		navigator.permissions.query({ name: 'camera' }).then((permissionStatus) => {
+			cameraGranted = permissionStatus.state === 'granted';
+			permissionStatus.onchange = () => {
+				cameraGranted = permissionStatus.state === 'granted';
+			};
 		});
 
 		startbutton.addEventListener(
@@ -111,12 +126,18 @@
 		❌
 	{/if}
 </form>
-<select bind:value={deviceId}>
-	{#each mediaDevices as d}
-		<option value={d.deviceId}>{d.label}</option>
-	{/each}
-</select>
-<button onclick={acticateWebcam}>activate webcam</button>
+{#if !cameraGranted}
+	<button onclick={allowWebcam}>allow access to webcam</button>
+{:else}
+	<label>
+		📷
+		<select bind:value={deviceId}>
+			{#each mediaDevices as d}
+				<option value={d.deviceId}>{d.label}</option>
+			{/each}
+		</select>
+	</label>
+{/if}
 <br />
 <video bind:this={video} playsinline></video>
 <canvas bind:this={canvas}></canvas>
