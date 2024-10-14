@@ -11,6 +11,7 @@
 	let username = $state('');
 	let password = $state('');
 	let serverUrl = $state('');
+	let loginUsername = $state('');
 	let lastResult: { modelGuess: string; output: string } | null = $state(null);
 
 	function acticateWebcam() {
@@ -29,6 +30,7 @@
 		loginFailure = false;
 		try {
 			app = await Client.connect(serverUrl, { auth: [username, password] });
+			loginUsername = username;
 		} catch (error) {
 			loginFailure = true;
 			throw error;
@@ -42,7 +44,7 @@
 		const result = await app.predict('/predict_and_save_image', {
 			image: image,
 			tag: 'none',
-			username
+			username: loginUsername
 		});
 		lastResult = {
 			modelGuess: (result.data as unknown[])[0] as string,
