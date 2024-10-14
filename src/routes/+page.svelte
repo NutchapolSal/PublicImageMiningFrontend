@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Client } from '@gradio/client';
 
+	const tags = ['gun', 'lizard', 'paper', 'rock', 'scissors', 'trident', 'none'];
+
 	let video: HTMLVideoElement;
 	let canvas: HTMLCanvasElement;
 	let startbutton: HTMLButtonElement;
@@ -12,8 +14,9 @@
 	let password = $state('');
 	let serverUrl = $state('');
 	let loginUsername = $state('');
-	let lastResult: { modelGuess: string; output: string } | null = $state(null);
+	let lastResult: { modelGuess: string; output: string; thumb: string } | null = $state(null);
 	let cameraGranted = $state(false);
+	let tag = $state('none');
 
 	async function allowWebcam() {
 		await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -60,14 +63,16 @@
 		}
 		const result = await app.predict('/predict_and_save_image', {
 			image: image,
-			tag: 'none',
+			tag,
 			username: loginUsername
 		});
+		const data = result.data as unknown[];
 		lastResult = {
-			modelGuess: (result.data as unknown[])[0] as string,
-			output: (result.data as unknown[])[1] as string
+			modelGuess: data[0] as string,
+			output: data[1] as string,
+			thumb: (data[2] as { url: string }).url
 		};
-	}
+		console.log(result);
 	}
 
 	$effect(() => {
@@ -142,11 +147,21 @@
 <video bind:this={video} playsinline></video>
 <canvas bind:this={canvas}></canvas>
 <br />
-<button bind:this={startbutton}>capture</button>
+tag as:
+{#each tags as t}
+	<label>
+		<input type="radio" bind:group={tag} value={t} />
+		{t}
+	</label>
+{/each}
+<br />
+<br />
+<button bind:this={startbutton} class="capture">capture</button>
 <br />
 {#if lastResult}
 	<p>Model guess: {lastResult.modelGuess}</p>
 	<p>Output: {lastResult.output}</p>
+	<img src={lastResult.thumb} />
 {/if}
 
 <style>
@@ -157,5 +172,8 @@
 	canvas {
 		width: 10%;
 		height: auto;
+	}
+	button.capture {
+		padding: 15px 32px;
 	}
 </style>
