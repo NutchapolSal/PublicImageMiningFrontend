@@ -13,7 +13,6 @@
 	let username = $state('');
 	let password = $state('');
 	let serverUrl = $state('');
-	let loginUsername = $state('');
 	let lastResult: { modelGuess: string; output: string; thumb: string } | null = $state(null);
 	let cameraGranted = $state(false);
 	let tag = $state('none');
@@ -50,7 +49,6 @@
 		loginFailure = false;
 		try {
 			app = await Client.connect(serverUrl, { auth: [username, password] });
-			loginUsername = username;
 		} catch (error) {
 			loginFailure = true;
 			throw error;
@@ -63,8 +61,7 @@
 		}
 		const result = await app.predict('/predict_and_save_image', {
 			image: image,
-			tag,
-			username: loginUsername
+			tag
 		});
 		const data = result.data as unknown[];
 		lastResult = {
