@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Client } from '@gradio/client';
 
 	const tags = ['gun', 'lizard', 'paper', 'rock', 'scissors', 'trident', 'none'];
+	const KEY_PREFIX = 'PIMF';
 
 	let video: HTMLVideoElement;
 	let canvas: HTMLCanvasElement;
@@ -73,6 +75,33 @@
 	}
 
 	$effect(() => {
+		serverUrl = localStorage.getItem(`${KEY_PREFIX}-serverUrl`) ?? '';
+		$effect(() => {
+			if (serverUrl == '') {
+				localStorage.removeItem(`${KEY_PREFIX}-serverUrl`);
+				return;
+			}
+			localStorage.setItem(`${KEY_PREFIX}-serverUrl`, serverUrl);
+		});
+
+		username = localStorage.getItem(`${KEY_PREFIX}-username`) ?? '';
+		$effect(() => {
+			if (username == '') {
+				localStorage.removeItem(`${KEY_PREFIX}-username`);
+				return;
+			}
+			localStorage.setItem(`${KEY_PREFIX}-username`, username);
+		});
+
+		password = localStorage.getItem(`${KEY_PREFIX}-password`) ?? '';
+		$effect(() => {
+			if (password == '') {
+				localStorage.removeItem(`${KEY_PREFIX}-password`);
+				return;
+			}
+			localStorage.setItem(`${KEY_PREFIX}-password`, password);
+		});
+
 		navigator.permissions.query({ name: 'camera' }).then((permissionStatus) => {
 			cameraGranted = permissionStatus.state === 'granted';
 			permissionStatus.onchange = () => {
